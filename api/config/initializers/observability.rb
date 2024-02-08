@@ -2,6 +2,9 @@
 
 require 'lograge'
 require 'prometheus_exporter/middleware'
+require 'opentelemetry/sdk'
+require 'opentelemetry/exporter/otlp'
+require 'opentelemetry/instrumentation/all'
 
 Rails.application.configure do
   # Logging -- single line logs, json format
@@ -11,4 +14,7 @@ Rails.application.configure do
 
   # Metrics -- Prometheus
   config.middleware.use PrometheusExporter::Middleware
+
+  # Tracing -- OpenTelemetry
+  OpenTelemetry::SDK.configure(&:use_all)
 end
