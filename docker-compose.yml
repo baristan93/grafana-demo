@@ -1,0 +1,117 @@
+version: "3"
+
+services:
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: grafana
+    environment:
+      GF_DATABASE_HOST: db:3306
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD: grafana
+      GF_DATABASE_TYPE: mysql
+      GF_DATABASE_MAX_OPEN_CONN: 300
+    volumes:
+      - ./data/grafana/data:/var/lib/grafana
+      - ./data/grafana/configs/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    depends_on:
+      - db
+      - loki
+    links:
+      - db
+  db:
+    image: mysql:8.0.33
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: grafana
+      MYSQL_ROOT_PASSWORD: pr0duct1v3
+    restart: always
+    expose:
+      - 3306
+    volumes:
+      - ./data/db:/var/lib/mysql
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    command: -config.file=/mnt/config/loki.yaml
+    restart: unless-stopped
+    volumes:
+      - ./data/loki/data:/tmp/loki
+      - ./data/loki/configs/loki.yml:/mnt/config/loki.yaml
+    ports:
+      - 3100:3100
+
+  fluent-bit:
+    image: grafana/fluent-bit-plugin-loki:latest
+    container_name: fluent-bit
+    environment:
+      LOKI_URL: http://loki:3100/loki/api/v1/push
+    volumes:
+      - ./data/fluent/config/fluentbit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./data/fluent/config/parser.conf:/fluent-bit/etc/parser.conf
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp" 
+    restart: always
+    depends_on:
+      - loki
+    links:
+      - loki
+
+  app:
+    image: app
+    container_name: app
+    build:
+      context: app/
+    environment:
+      OTEL_URL: otelcol
+      OTEL_PORT: 4318
+    ports:
+      - 8080:8080
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "127.0.0.1:24224"
+        tag: app
+    depends_on:
+      - fluent-bit
+
+  otelcol:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otelcol
+    volumes:
+      - ./data/otel/config/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    environment:
+      TEMPO_URL: tempo:4318
+    ports:
+      - 8889:8889
+      - 8888:8888
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./data/tempo/config/tempo.yaml:/etc/tempo.yaml
+      - ./data/tempo/data:/tmp/tempo
+    ports:
+      - 3200:3200
+      - 4318:4318
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./data/prometheus/config/prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"

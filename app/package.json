@@ -1,0 +1,25 @@
+{
+    "name": "app",
+    "version": "0.0.1",
+    "main": "app.js",
+    "license": "UNLICENSED",
+    "scripts": {
+        "start": "node --require ./instrumentations.js app.js "
+    },       
+    "dependencies": {
+      "express": "^4",
+      "bunyan": "1.8.15",
+      "uuid": "9.0.1",
+      "@opentelemetry/sdk-node": "latest",
+      "@opentelemetry/api": "latest",
+      "@opentelemetry/auto-instrumentations-node": "latest",
+      "@opentelemetry/sdk-metrics": "latest",
+      "@opentelemetry/sdk-trace-node": "latest",
+      "@opentelemetry/exporter-metrics-otlp-proto": "latest",
+      "@opentelemetry/exporter-prometheus": "latest",
+      "prom-client": "latest"
+    },
+    "engines": {
+      "node": ">= 20"
+    }
+  }
