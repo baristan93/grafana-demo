@@ -90,6 +90,7 @@ services:
     environment:
       SECRET_KEY_BASE: secret_key_base
       RAILS_ENV: production
+      PROMETHEUS_EXPORTER_HOST: prometheus_exporter
     ports:
       - 4000:3000
     logging:
@@ -99,6 +100,16 @@ services:
         tag: app
     depends_on:
       - fluent-bit
+      - prometheus_exporter
+
+  prometheus_exporter:
+    image: prometheus_exporter
+    container_name: prometheus_exporter
+    build:
+      context: prometheus_exporter/
+    ports:
+      - 9394:9394
+
   otelcol:
     image: otel/opentelemetry-collector-contrib
     container_name: otelcol
