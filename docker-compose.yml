@@ -82,6 +82,16 @@ services:
     depends_on:
       - fluent-bit
 
+  api:
+    image: api
+    container_name: api
+    build:
+      context: api/
+    environment:
+      SECRET_KEY_BASE: secret_key_base
+      RAILS_ENV: production
+    ports:
+      - 4000:3000
   otelcol:
     image: otel/opentelemetry-collector-contrib
     container_name: otelcol
