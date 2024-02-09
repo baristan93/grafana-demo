@@ -91,7 +91,10 @@ services:
       SECRET_KEY_BASE: secret_key_base
       RAILS_ENV: production
       PROMETHEUS_EXPORTER_HOST: prometheus_exporter
+      OTEL_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4318
+      OTEL_SERVICE_NAME: api
+      OTEL_RESOURCE_ATTRIBUTES: application=api
     ports:
       - 4000:3000
     logging:
