@@ -13,3 +13,10 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets: ["otelcol:8889"]
+  - job_name: "ruby"
+    scrape_interval: 10s
+    relabel_configs:
+      - replacement: 'api'
+        target_label: instance
+    static_configs:
+      - targets: ["prometheus_exporter:9394"]
